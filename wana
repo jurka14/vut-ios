@@ -1,0 +1,356 @@
+#!/bin/sh
+
+makej()
+{
+	
+	if [ "$a_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | awk -v var="$a_var" '{
+									d=substr($4,2,2);
+									m=substr($4,5,3);
+									y=substr($4,9,4);
+									ho=substr($4,14,2);
+									mi=substr($4,17,2);
+									se=substr($4,20,2);
+									yr=substr(var,1,4);
+									mr=substr(var,6,2);
+									dr=substr(var,9,2);
+									hor=substr(var,12,2);
+									mir=substr(var,15,2);
+									ser=substr(var,18,2);
+									
+									if (m == "Jan")
+									m="01";
+									else if (m == "Feb")
+									m="02";
+									else if (m == "Mar")
+									m="03";
+									else if (m == "Apr")
+									m="04";
+									else if (m == "May")
+									m="05";
+									else if (m == "Jun")
+									m="06";
+									else if (m == "Jul")
+									m="07";
+									else if (m == "Aug")
+									m="08";
+									else if (m == "Sep")
+									m="09";
+									else if (m == "Oct")
+									m="10";
+									else if (m == "Nov")
+									m="11";
+									else if (m == "Dec")
+									m="12";
+									
+									
+									same=0;
+									if( y+0 == yr+0 && m+0 == mr+0 && d+0 == dr+0 && ho+0 == hor+0 && mi+0 == mir+0 && se+0 == ser+0 ) same=1;
+									if( y+0 >= yr+0 && m+0 >= mr+0 && d+0 >= dr+0 && ho+0 >= hor+0 && mi+0 >= mir+0 && se+0 >= ser+0 && same == 0) print $0; 
+									}')
+									
+	fi
+	
+	if [ "$b_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | awk -v var="$b_var" '{
+									d=substr($4,2,2);
+									m=substr($4,5,3);
+									y=substr($4,9,4);
+									ho=substr($4,14,2);
+									mi=substr($4,17,2);
+									se=substr($4,20,2);
+									yr=substr(var,1,4);
+									mr=substr(var,6,2);
+									dr=substr(var,9,2);
+									hor=substr(var,12,2);
+									mir=substr(var,15,2);
+									ser=substr(var,18,2);
+									
+									if (m == "Jan")
+									m="01";
+									else if (m == "Feb")
+									m="02";
+									else if (m == "Mar")
+									m="03";
+									else if (m == "Apr")
+									m="04";
+									else if (m == "May")
+									m="05";
+									else if (m == "Jun")
+									m="06";
+									else if (m == "Jul")
+									m="07";
+									else if (m == "Aug")
+									m="08";
+									else if (m == "Sep")
+									m="09";
+									else if (m == "Oct")
+									m="10";
+									else if (m == "Nov")
+									m="11";
+									else if (m == "Dec")
+									m="12";
+									
+									
+									same=0;
+									if( y+0 == yr+0 && m+0 == mr+0 && d+0 == dr+0 && ho+0 == hor+0 && mi+0 == mir+0 && se+0 == ser+0 ) same=1;
+									if( y+0 <= yr+0 && m+0 <= mr+0 && d+0 <= dr+0 && ho+0 <= hor+0 && mi+0 <= mir+0 && se+0 <= ser+0 && same == 0) print $0; 
+									}')
+									
+	fi
+	
+	if [ "$ip_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | awk -v var="$ip_var" '{ if(var == $1) print $0; }')
+	fi
+	
+	if [ "$uri_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | grep "$uri_var")
+		
+	fi
+	
+	if [ "$list_ip_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | awk '{print $1}')
+		text=$(echo "$text" | sort -u)
+		echo "$text"
+	fi
+	
+	if [ "$list_hosts_flag" -eq "1" ]
+	then
+	
+		text=$(echo "$text" | awk '{print $1}')
+		text=$(echo "$text" | sort -u)
+		
+		line="a"
+		num=1
+		while [ "$line" != "" ]
+		do
+			line=$(echo "$text" | sed -n "${num}p")
+			
+			if [ "$line" = "" ]
+			then
+			break
+			fi
+			
+			line1="$line"
+			
+			line=$(host "$line" | awk '{print $5}')
+			
+			case $line in
+				3\(NXDOMAIN\))
+					echo "$line1"
+					;;
+				2\(SERVFAIL\))
+					echo "$line1"
+					;;
+				for*)
+					line=$(echo "$line" | sed -n '2p')
+					echo "$line"
+					;;
+				*)
+					echo "$line"
+					;;
+			esac
+			
+			
+			
+			num=$((num+1))
+			
+		done
+		
+		
+	fi
+	
+	if [ "$list_uri_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | awk '{print $6" "$7}')
+		text=$(echo "$text" | sed '/"-"/d')
+		text=$(echo "$text" | awk '{print $2}')
+		text=$(echo "$text" | sort -u)
+		echo "$text"
+	fi
+	
+	if [ "$hist_ip_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | awk '{print $1}')
+		text=$(echo "$text" | sort | uniq -c)
+		text=$(echo "$text" | sort -r)
+		text=$(echo "$text" | awk '{printf "%s (%s): ", $2, $1; var=$1; for (i = 0; i < var; ++i) printf "#"; printf "\n"}')
+		echo "$text"
+	fi
+	
+	if [ "$hist_load_flag" -eq "1" ]
+	then
+		text=$(echo "$text" | awk '{print $4}')
+		text=$(echo "$text" | sed 's/.....$//')
+		text=$(echo "$text" | sort | uniq -c)
+		text=$(echo "$text" | awk '{
+									d=substr($2,2,2);
+									m=substr($2,5,3);
+									y=substr($2,9,4);
+									h=substr($2,14,2);
+									if (m == "Jan")
+									m="01";
+									else if (m == "Feb")
+									m="02";
+									else if (m == "Mar")
+									m="03";
+									else if (m == "Apr")
+									m="04";
+									else if (m == "May")
+									m="05";
+									else if (m == "Jun")
+									m="06";
+									else if (m == "Jul")
+									m="07";
+									else if (m == "Aug")
+									m="08";
+									else if (m == "Sep")
+									m="09";
+									else if (m == "Oct")
+									m="10";
+									else if (m == "Nov")
+									m="11";
+									else if (m == "Dec")
+									m="12";
+									
+									printf "%s-%s-%s %s:00 (%s): ", y, m, d, h, $1;
+									var=$1; for (i = 0; i < var; ++i) printf "#"; printf "\n"
+									}')
+		
+		
+		
+		echo "$text"
+	fi
+	
+	
+	if [ "$list_ip_flag" -eq "0" ] && [ "$list_hosts_flag" -eq "0" ] && [ "$list_uri_flag" -eq "0" ] && [ "$hist_ip_flag" -eq "0" ] && [ "$hist_load_flag" -eq "0" ]
+	then
+		text=$(echo "$text" | sort -u)
+		echo "$text"
+	fi
+	
+}
+
+POSIXLY_CORRECT=yes
+no_of_cmds=0
+
+list_ip_flag=0
+list_hosts_flag=0
+list_uri_flag=0
+hist_ip_flag=0
+hist_load_flag=0
+
+a_flag=0
+b_flag=0
+ip_flag=0
+uri_flag=0
+
+
+for i in "$@"
+do
+	case $i in
+		list-*)
+			no_of_cmds=$((no_of_cmds+1))
+			;;
+		hist-*)
+			no_of_cmds=$((no_of_cmds+1))
+			;;
+		-a*)
+			no_of_cmds=$((no_of_cmds+1))
+			;;
+		-b*)
+			no_of_cmds=$((no_of_cmds+1))
+			;;
+		-ip*)
+			no_of_cmds=$((no_of_cmds+1))
+			;;
+		-uri*)
+			no_of_cmds=$((no_of_cmds+1))
+			;;
+	esac
+done
+
+
+i=0
+while [ "$no_of_cmds" -gt "$i" ]
+do
+	case $1 in
+		list-ip)
+			list_ip_flag=1
+			shift
+			;;
+		list-hosts)
+			list_hosts_flag=1
+			shift
+			;;
+		list-uri)
+			list_uri_flag=1
+			shift
+			;;
+		hist-ip)
+			hist_ip_flag=1
+			shift
+			;;
+		hist-load)
+			hist_load_flag=1
+			shift
+			;;
+		-a*)
+			a_flag=1
+			shift
+			a_var=$1
+			shift
+			;;
+		-b*)
+			b_flag=1
+			shift
+			b_var=$1
+			shift
+			;;
+		-ip*)
+			ip_flag=1
+			shift
+			ip_var=$1
+			shift
+			;;
+		-uri*)
+			uri_flag=1
+			shift
+			uri_var=$1
+			shift
+			;;
+		
+	esac
+		
+	i=$((i+1))
+done
+
+text=""
+
+if [ -f "$1" ]
+then
+
+	while [ -f "$1" ]
+	do
+		text="$text$(zcat -f "$1")"
+		shift
+	done
+	makej
+	
+else
+
+	echo "Zadejte textovy vstup:"
+	read -r text
+	makej
+	
+	
+fi
+
+
+
+
